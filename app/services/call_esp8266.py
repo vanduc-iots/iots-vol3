@@ -92,15 +92,9 @@ def light_control(status="off", led="all"):
         else:
             led_text = f"đèn {led}"
         statuses_text = ", ".join([f"đèn {l}: {s}" for l, s in led_statuses.items()])
-        response_content = generate_Content(
-            f"Bạn hãy phản hồi người dùng rằng bạn đã hoàn thành hành động {action_text} {led_text}. "
-            f"Trạng thái hiện tại: {statuses_text}. Hành động này không cần phải call function"
-        )["message"]
+        response_content = f"Đã {action_text} {led_text} thành công. Trạng thái hiện tại: {statuses_text}."
     else:
-        response_content = generate_Content(
-            f"Xin lỗi, tôi không thể điều khiển đèn vì lỗi: {error_message}. "
-            f"Vui lòng kiểm tra ESP8266 hoặc kết nối WiFi. Hành động này không cần phải call function"
-        )["message"]
+        response_content = f"Xin lỗi, không thể {action_text} {led_text} do lỗi: {error_message}. Vui lòng kiểm tra ESP8266."
     
     return {
         "content": response_content,
