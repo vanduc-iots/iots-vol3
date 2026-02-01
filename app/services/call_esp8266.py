@@ -2,8 +2,8 @@ import requests
 import time
 
 # ESP8266 Configuration
-ESP8266_IP = "10.216.4.134"  # Thay đổi IP này theo IP thực tế của ESP8266
-ESP8266_PORT = 80
+ESP8266_IP = "ungroundable-brigandishly-princeton.ngrok-free.dev"  # Ngrok tunnel URL
+ESP8266_PORT = 443  # HTTPS port for ngrok
 REQUEST_TIMEOUT = 5
 MAX_RETRY = 3
 
@@ -41,7 +41,7 @@ def light_control(status="off", led="all"):
     error_message = ""
     
     for l in leds_to_control:
-        url = f"http://{ESP8266_IP}:{ESP8266_PORT}/led{l}/{status}"
+        url = f"https://{ESP8266_IP}/led{l}/{status}"
         led_status = None
         
         # Retry logic for each LED
