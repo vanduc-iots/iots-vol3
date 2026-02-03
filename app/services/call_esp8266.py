@@ -12,7 +12,7 @@ def light_control(status="off", led="all"):
     status = status.lower().strip()
     led = led.lower().strip()
 
-    if status not in ["on", "off"]:
+    if status not in ["on", "off", "toggle"]:
         status = "off"
 
     if led not in ["1", "2", "all"]:
@@ -24,7 +24,32 @@ def light_control(status="off", led="all"):
     error_message = ""
 
     for l in leds_to_control:
-        url = f"https://{ESP8266_HOST}/led{l}/{status}"
+        if status == "toggle":
+            # First get current status
+            url_get = f"https://{ESP8266_HOST}/led{l}/status"
+            current_status = None
+            for attempt in range(MAX_RETRY):
+                try:
+                    response = requests.get(url_get, timeout=REQUEST_TIMEOUT)
+                    if response.status_code == 200:
+                        lines = response.text.strip().split("\n")
+                        for line in lines:
+                            if line.startswith(f"LED{l}="):
+                                current_status = line.split("=")[1].lower()
+                                break
+                    break
+                except:
+                    pass
+            if current_status == "on":
+                new_status = "off"
+            elif current_status == "off":
+                new_status = "on"
+            else:
+                new_status = "off"  # default
+        else:
+            new_status = status
+
+        url = f"https://{ESP8266_HOST}/led{l}/{new_status}"
         led_status = None
 
         for attempt in range(MAX_RETRY):
@@ -54,7 +79,10 @@ def light_control(status="off", led="all"):
         led_statuses[l] = led_status
 
     if all(led_statuses.values()):
-        action_text = "bật" if status == "on" else "tắt"
+        if status == "toggle":
+            action_text = "chuyển đổi"
+        else:
+            action_text = "bật" if status == "on" else "tắt"
         led_text = "tất cả đèn" if led == "all" else f"đèn {led}"
         statuses_text = ", ".join([f"đèn {k}: {v}" for k, v in led_statuses.items()])
         response_content = f"Đã {action_text} {led_text}. Trạng thái: {statuses_text}."
