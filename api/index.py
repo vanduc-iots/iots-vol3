@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify, render_template, redirect
 from app import generate_Content
+from app.services.call_esp8266 import light_control
 import logging
 import os
 
@@ -27,5 +28,23 @@ def botController():
     return jsonify({
         "model": response
     }), 200
+
+@app.route("/toggle_led1", methods=["GET", "POST"])
+def toggle_led1():
+    result = light_control(status="toggle", led="1")
+    return jsonify({"message": result["content"]})
+
+@app.route("/toggle_led2", methods=["GET", "POST"])
+def toggle_led2():
+    result = light_control(status="toggle", led="2")
+    return jsonify({"message": result["content"]})
+
+@app.route("/control_all", methods=["GET", "POST"])
+def control_all():
+    action = request.args.get("action", "off")
+    if action not in ["on", "off"]:
+        action = "off"
+    result = light_control(status=action, led="all")
+    return jsonify({"message": result["content"]})
 
 # Vercel expects the Flask app to be named 'app'
