@@ -27,7 +27,6 @@ def light_control(status="off", led="all"):
     if led == "all":
         # For all, use /ledall/
         url = f"https://{ESP8266_HOST}/ledall/{status}"
-        led_status = None
         for attempt in range(MAX_RETRY):
             try:
                 print(f"[light_control] Attempt {attempt+1}: {url}")
@@ -36,10 +35,12 @@ def light_control(status="off", led="all"):
                 if response.status_code == 200:
                     lines = response.text.strip().split("\n")
                     for line in lines:
-                        if "LED1=" in line:
-                            led_status = "OK"  # Assume success
-                            break
-                    break
+                        if line.startswith("LED1="):
+                            led_statuses["1"] = line.split("=")[1]
+                        elif line.startswith("LED2="):
+                            led_statuses["2"] = line.split("=")[1]
+                    if led_statuses:
+                        break
                 else:
                     error_message = f"HTTP {response.status_code}"
 
@@ -51,9 +52,6 @@ def light_control(status="off", led="all"):
                 error_message = str(e)
 
             time.sleep(1)
-
-        led_statuses["1"] = led_status
-        led_statuses["2"] = led_status
     else:
         # For individual LEDs
         for l in leds_to_control:
