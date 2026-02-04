@@ -2,7 +2,7 @@ import requests
 import time
 import os
 
-ESP8266_HOST = os.getenv("ESP8266_HOST", "10.216.4.134")
+ESP8266_HOST = os.getenv("ESP8266_HOST", "esp.hotrotuyensinh2025.click")
 REQUEST_TIMEOUT = 5
 MAX_RETRY = 3
 
