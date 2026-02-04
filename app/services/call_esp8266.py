@@ -3,7 +3,7 @@ import time
 import os
 
 # ESP8266 Configuration (Cloudflare Tunnel or Local IP)
-ESP8266_HOST = os.getenv("ESP8266_HOST", "192.168.1.100")  # Default to local IP; set to domain for production
+ESP8266_HOST = os.getenv("ESP8266_HOST", "10.216.4.134")  # Default to local IP; set to domain for production
 REQUEST_TIMEOUT = 5
 MAX_RETRY = 3
 
