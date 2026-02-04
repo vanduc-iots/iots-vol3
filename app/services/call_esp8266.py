@@ -2,36 +2,46 @@ import requests
 import time
 import os
 
-# ESP8266 Configuration (Cloudflare Tunnel or Local IP)
-ESP8266_HOST = os.getenv("ESP8266_HOST", "10.141.235.134")  # Default to local IP; set to domain for production
+# ESP8266 Configuration
+ESP8266_HOST = os.getenv("ESP8266_HOST", "10.141.235.134")
 REQUEST_TIMEOUT = 5
 MAX_RETRY = 3
 
-def light_control(status="off", led="all"):
-    from ..bot import generate_Content
+def light_control(status=None, led="all"):
+    """
+    status: on | off | toggle
+    led: 1 | 2 | all
+    """
 
-    status = status.lower().strip()
-    led = led.lower().strip()
+    # ===== 1. Kiểm tra đầu vào =====
+    if not status:
+        return {
+            "content": "Không có lệnh điều khiển mới.",
+            "image": []
+        }
+
+    status = str(status).lower().strip()
+    led = str(led).lower().strip()
 
     if status not in ["on", "off", "toggle"]:
-        status = "off"
+        return {
+            "content": f"Lệnh không hợp lệ: {status}",
+            "image": []
+        }
 
     if led not in ["1", "2", "all"]:
         led = "all"
 
     leds_to_control = ["1", "2"] if led == "all" else [led]
-
     led_statuses = {}
-    error_message = ""
+    last_error = ""
 
-    # Control LEDs
+    # ===== 2. Gửi lệnh điều khiển =====
     for l in leds_to_control:
         if status == "toggle":
             url = f"http://{ESP8266_HOST}/led{l}/toggle"
-            new_status = "toggled"  # placeholder
         else:
-            new_status = status
-            url = f"http://{ESP8266_HOST}/led{l}/{new_status}"
+            url = f"http://{ESP8266_HOST}/led{l}/{status}"
 
         led_status = None
 
@@ -41,38 +51,48 @@ def light_control(status="off", led="all"):
                 response = requests.get(url, timeout=REQUEST_TIMEOUT)
 
                 if response.status_code == 200:
-                    lines = response.text.strip().split("\n")
-                    for line in lines:
+                    # ESP trả dạng: LED1=ON
+                    for line in response.text.strip().split("\n"):
                         if line.startswith(f"LED{l}="):
                             led_status = line.split("=")[1]
                             break
+
+                    # Nếu toggle mà ESP không trả trạng thái
+                    if status == "toggle" and not led_status:
+                        led_status = "CHANGED"
+
                     break
                 else:
-                    error_message = f"HTTP {response.status_code}"
+                    last_error = f"HTTP {response.status_code}"
 
             except requests.exceptions.Timeout:
-                error_message = "Timeout"
+                last_error = "Timeout khi kết nối ESP"
             except requests.exceptions.ConnectionError:
-                error_message = "Không kết nối được ESP qua Cloudflare"
+                last_error = "Không kết nối được ESP"
             except Exception as e:
-                error_message = str(e)
+                last_error = str(e)
 
             time.sleep(1)
 
         led_statuses[l] = led_status
 
-    if all(led_statuses.values()):
-        if status == "toggle":
-            action_text = "chuyển đổi"
-        else:
-            action_text = "bật" if status == "on" else "tắt"
-        led_text = "tất cả đèn" if led == "all" else f"đèn {led}"
-        statuses_text = ", ".join([f"đèn {k}: {v}" for k, v in led_statuses.items()])
-        response_content = f"Đã {action_text} {led_text}. Trạng thái: {statuses_text}."
-    else:
-        response_content = f"Lỗi điều khiển đèn: {error_message}"
+    # ===== 3. Tạo phản hồi chatbot =====
+    if any(v is None for v in led_statuses.values()):
+        return {
+            "content": f"Lỗi điều khiển đèn: {last_error}",
+            "image": []
+        }
+
+    action_text = {
+        "on": "bật",
+        "off": "tắt",
+        "toggle": "chuyển đổi trạng thái"
+    }[status]
+
+    led_text = "tất cả đèn" if led == "all" else f"đèn {led}"
+    status_text = ", ".join([f"đèn {k}: {v}" for k, v in led_statuses.items()])
 
     return {
-        "content": response_content,
+        "content": f"Đã {action_text} {led_text}. Trạng thái: {status_text}.",
         "image": []
     }
