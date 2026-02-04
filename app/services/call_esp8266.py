@@ -3,7 +3,7 @@ import time
 import os
 
 # ESP8266 Configuration (Cloudflare Tunnel or Local IP)
-ESP8266_HOST = os.getenv("ESP8266_HOST", "10.216.4.134")  # Default to local IP; set to domain for production
+ESP8266_HOST = os.getenv("ESP8266_HOST", "10.141.235.134")  # Default to local IP; set to domain for production
 REQUEST_TIMEOUT = 5
 MAX_RETRY = 3
 
@@ -27,11 +27,11 @@ def light_control(status="off", led="all"):
     # Control LEDs
     for l in leds_to_control:
         if status == "toggle":
-            url = f"https://{ESP8266_HOST}/led{l}/toggle"
+            url = f"http://{ESP8266_HOST}/led{l}/toggle"
             new_status = "toggled"  # placeholder
         else:
             new_status = status
-            url = f"https://{ESP8266_HOST}/led{l}/{new_status}"
+            url = f"http://{ESP8266_HOST}/led{l}/{new_status}"
 
         led_status = None
 

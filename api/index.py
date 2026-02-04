@@ -66,7 +66,7 @@ def get_status():
     from app.services.call_esp8266 import ESP8266_HOST, REQUEST_TIMEOUT, MAX_RETRY
     statuses = {}
     for led in ["1", "2"]:
-        url = f"https://{ESP8266_HOST}/led{led}/status"
+        url = f"http://{ESP8266_HOST}/led{led}/status"
         status = "unknown"
         for attempt in range(MAX_RETRY):
             try:
