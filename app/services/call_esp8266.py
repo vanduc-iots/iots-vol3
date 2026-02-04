@@ -60,11 +60,7 @@ def light_control(status="off", led="all"):
                 response = requests.get(url, timeout=REQUEST_TIMEOUT)
 
                 if response.status_code == 200:
-                    lines = response.text.strip().split("\n")
-                    for line in lines:
-                        if line.startswith(f"LED{l}="):
-                            led_status = line.split("=")[1]
-                            break
+                    led_status = new_status
                     break
                 else:
                     error_message = f"HTTP {response.status_code}"
