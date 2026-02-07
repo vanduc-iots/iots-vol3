@@ -228,4 +228,97 @@ function closeFileChoosen(element = null) {
     }
 }
 
+// ==================== VOICE RECOGNITION ====================
+const voiceBtn = document.getElementById("voice-btn");
+const voiceIcon = document.getElementById("voice-icon");
+const voiceText = document.getElementById("voice-text");
 
+if (voiceBtn && voiceRecognition.isSupported) {
+    voiceBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        
+        if (voiceRecognition.isListening) {
+            // Stop recording
+            const transcript = voiceRecognition.stop();
+            updateVoiceBtnUI(false);
+            
+            if (transcript) {
+                // Set the text to prompt and submit
+                prompt.value = transcript;
+                sendMessageBtn.classList.add("show-send-btn");
+                // Auto-submit the message
+                setTimeout(() => {
+                    document.getElementById("send-message").click();
+                }, 500);
+            }
+        } else {
+            // Start recording
+            voiceRecognition.start();
+            updateVoiceBtnUI(true);
+        }
+    });
+    
+    // Handle voice recognition callbacks
+    voiceRecognition.onStart = () => {
+        console.log('Voice recognition started');
+        updateVoiceBtnUI(true);
+    };
+    
+    voiceRecognition.onResult = (result) => {
+        // Update prompt text with interim results
+        if (result.final) {
+            prompt.value = result.final;
+        } else {
+            prompt.value = result.final || result.interim;
+        }
+        
+        // Show send button if there's text
+        if (prompt.value) {
+            sendMessageBtn.classList.add("show-send-btn");
+        }
+    };
+    
+    voiceRecognition.onEnd = () => {
+        console.log('Voice recognition ended');
+        updateVoiceBtnUI(false);
+    };
+    
+    voiceRecognition.onError = (error) => {
+        console.error('Voice recognition error:', error);
+        updateVoiceBtnUI(false);
+        
+        // Show notification to user
+        showVoiceNotification(error.message, 'error');
+    };
+    
+    function updateVoiceBtnUI(isListening) {
+        if (isListening) {
+            voiceIcon.className = 'bi bi-mic-fill';
+            voiceText.textContent = 'Đang lắng nghe...';
+            voiceBtn.classList.add('listening');
+        } else {
+            voiceIcon.className = 'bi bi-mic';
+            voiceText.textContent = 'Ghi âm';
+            voiceBtn.classList.remove('listening');
+        }
+    }
+    
+    function showVoiceNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type === 'error' ? 'danger' : 'info'} position-fixed top-0 start-50 translate-middle-x mt-3`;
+        notification.style.zIndex = '9999';
+        notification.style.maxWidth = '400px';
+        notification.textContent = message;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.classList.add('fade');
+            setTimeout(() => notification.remove(), 150);
+        }, 3000);
+    }
+} else if (voiceBtn && !voiceRecognition.isSupported) {
+    voiceBtn.disabled = true;
+    voiceBtn.title = 'Web Speech API không được hỗ trợ trên trình duyệt này';
+    voiceText.textContent = 'Không hỗ trợ';
+}

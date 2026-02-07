@@ -39,6 +39,8 @@ def control_all():
     result = light_control(status=action, led="all")
     print(f"Result: {result}")
     return jsonify({"message": result["content"]})
+
+@_app.route("/bot", methods=["POST"])
 def botController():
     req: dict = request.get_json()
     message = req.get("message", None)
